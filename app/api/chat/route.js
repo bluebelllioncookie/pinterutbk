@@ -1,20 +1,40 @@
 export async function POST(req) {
-  const { question } = await req.json();
+  try {
+    const { question } = await req.json();
 
-  let reply = "Coba tanya tentang silogisme, stoikiometri, atau penalaran kuantitatif.";
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Kamu adalah tutor UTBK yang menjelaskan seperti teman sebaya. Gunakan bahasa Indonesia yang mudah dipahami, singkat, akurat, dan kalau cocok beri permisalan sederhana.",
+          },
+          {
+            role: "user",
+            content: question,
+          },
+        ],
+        temperature: 0.6,
+      }),
+    });
 
-  const q = (question || "").toLowerCase();
+    const data = await response.json();
 
-  if (q.includes("silogisme")) {
-    reply =
-      "Bayangkan silogisme seperti rantai logika. Semua dokter suka belajar. Rani dokter. Berarti Rani suka belajar.";
-  } else if (q.includes("stoikiometri")) {
-    reply =
-      "Stoikiometri mirip resep masak. Kalau tahu jumlah bahan awal dan perbandingannya, kamu bisa hitung hasil akhirnya.";
-  } else if (q.includes("kuantitatif")) {
-    reply =
-      "Untuk penalaran kuantitatif, coba lihat pola dan eliminasi pilihan dulu sebelum menghitung panjang.";
+    const reply =
+      data.choices?.[0]?.message?.content ||
+      "Maaf, jawaban AI belum tersedia.";
+
+    return Response.json({ reply });
+  } catch (error) {
+    return Response.json({
+      reply: "Terjadi error saat menghubungi AI tutor.",
+    });
   }
-
-  return Response.json({ reply });
 }
