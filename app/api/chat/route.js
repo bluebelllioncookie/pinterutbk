@@ -2,7 +2,7 @@ export async function POST(req) {
   try {
     const { question } = await req.json();
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -10,31 +10,39 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        input: [
+        messages: [
           {
             role: "system",
             content:
-              "Kamu adalah tutor UTBK yang menjelaskan dengan bahasa sederhana, seperti teman sebaya, pakai contoh sehari-hari.",
+              "Kamu adalah tutor UTBK. Jelaskan dengan sederhana seperti guru les, pakai contoh sehari-hari.",
           },
           {
             role: "user",
             content: question,
           },
         ],
+        temperature: 0.7,
       }),
     });
 
     const data = await response.json();
 
+    // DEBUG kalau error
+    if (!response.ok) {
+      return Response.json({
+        reply: "ERROR OPENAI: " + JSON.stringify(data),
+      });
+    }
+
     return Response.json({
       reply:
-        data.output?.[0]?.content?.[0]?.text ||
-        data.output_text ||
-        "Tidak ada jawaban dari AI.",
+        data.choices?.[0]?.message?.content ||
+        "AI tidak mengembalikan jawaban.",
     });
+
   } catch (err) {
     return Response.json({
-      reply: "Error: " + err.message,
+      reply: "SERVER ERROR: " + err.message,
     });
   }
 }
