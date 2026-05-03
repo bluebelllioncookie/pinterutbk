@@ -9,32 +9,35 @@ export async function POST(req) {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
             content:
-              "Kamu adalah tutor UTBK yang menjelaskan seperti teman sebaya. Gunakan bahasa Indonesia yang mudah dipahami, singkat, akurat, dan kalau cocok beri permisalan sederhana.",
+              "Kamu adalah tutor UTBK yang menjelaskan seperti teman sebaya, ringkas, jelas, dan mudah dipahami.",
           },
           {
             role: "user",
             content: question,
           },
         ],
-        temperature: 0.6,
       }),
     });
 
     const data = await response.json();
 
-    const reply =
-      data.choices?.[0]?.message?.content ||
-      "Maaf, jawaban AI belum tersedia.";
+    if (!response.ok) {
+      return Response.json({
+        reply: `OpenAI error: ${data.error?.message || "unknown error"}`,
+      });
+    }
 
-    return Response.json({ reply });
+    return Response.json({
+      reply: data.choices?.[0]?.message?.content || "Tidak ada jawaban.",
+    });
   } catch (error) {
     return Response.json({
-      reply: "Terjadi error saat menghubungi AI tutor.",
+      reply: `Server error: ${error.message}`,
     });
   }
 }
